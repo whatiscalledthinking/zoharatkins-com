@@ -51,6 +51,12 @@ function decodeBase64(value) {
 
 export default {
   async fetch(request) {
+    const requestUrl = new URL(request.url);
+    if (requestUrl.hostname === "zoharatkins.com") {
+      requestUrl.hostname = "www.zoharatkins.com";
+      return Response.redirect(requestUrl.toString(), 301);
+    }
+
     const normalized = normalizePath(request.url);
     if (normalized.redirect) return Response.redirect(new URL(normalized.redirect, request.url), 301);
 
