@@ -1,6 +1,6 @@
 # zoharatkins.com
 
-Static Cloudflare Pages site for `zoharatkins.com`.
+Static Cloudflare-hosted site for `zoharatkins.com`.
 
 ## Local preview
 
@@ -12,13 +12,13 @@ Open `http://localhost:4173/`.
 
 ## Deploy
 
-This site has no build step. Deploy the repository root to Cloudflare Pages.
+This site has no build step. `worker.js` embeds the static pages and image assets and serves them from a Cloudflare Worker attached to both live hostnames.
 
 ```bash
-bunx wrangler pages deploy . --project-name zoharatkins-com
+bunx wrangler deploy
 ```
 
-The live custom domains should be:
+The live routes are:
 
 - `zoharatkins.com`
 - `www.zoharatkins.com`
