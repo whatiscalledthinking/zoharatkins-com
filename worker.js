@@ -23,6 +23,256 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
 };
 
+const MENDEL_PASSWORD = "mendel";
+const MENDEL_COOKIE = "mendel_auth=ok";
+const MENDEL_WS_URL = "wss://newark-subsidiaries-teachers-titled.trycloudflare.com";
+const MENDEL_TOKEN = "mendel-local-dev-token";
+
+const MENDEL_LOGIN_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mendel</title>
+  <style>
+    :root { color: #173257; background: #f3f8fb; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #f3f8fb 0%, #dbe3eb 100%); display: grid; place-items: center; padding: 24px; }
+    main { width: min(360px, 100%); text-align: center; }
+    h1 { margin: 0 0 24px; font-family: Georgia, "Times New Roman", serif; font-size: 48px; font-weight: 300; }
+    form { display: grid; gap: 14px; }
+    input { height: 48px; border: 1px solid rgba(255,255,255,.9); border-radius: 24px; background: rgba(255,255,255,.78); color: #173257; text-align: center; font-size: 15px; box-shadow: 0 10px 30px rgba(23,50,87,.08); outline: none; }
+    button { height: 44px; border: 0; border-radius: 22px; background: #173257; color: white; cursor: pointer; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mendel</h1>
+    <form method="post" action="/mendel/auth">
+      <input name="password" type="password" autocomplete="current-password" aria-label="Password" autofocus>
+      <button type="submit">Enter</button>
+    </form>
+  </main>
+</body>
+</html>`;
+
+const MENDEL_APP_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mendel</title>
+  <style>
+    :root { color: #173257; background: #f3f8fb; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #f3f8fb 0%, #dbe3eb 100%); }
+    .nav { position: fixed; inset: 0 0 auto; height: 64px; display: flex; align-items: center; justify-content: center; z-index: 2; }
+    .brand { font-family: Georgia, "Times New Roman", serif; font-size: 36px; font-weight: 300; }
+    .app { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 90px 20px 28px; }
+    .chat { width: min(720px, 100%); }
+    .empty { text-align: center; margin-bottom: 30px; }
+    .mem { font-size: 60px; line-height: 1; margin-bottom: 8px; }
+    .empty h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 56px; font-weight: 300; }
+    .messages { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; max-height: 58vh; overflow: auto; padding: 4px; }
+    .msg { width: fit-content; max-width: min(620px, 100%); white-space: pre-wrap; line-height: 1.5; border-radius: 18px; padding: 14px 16px; box-shadow: 0 12px 30px rgba(23,50,87,.08); }
+    .user { align-self: flex-end; background: rgba(23,50,87,.92); color: white; }
+    .assistant { align-self: flex-start; background: rgba(255,255,255,.82); }
+    form.composer { display: flex; gap: 10px; align-items: end; padding: 10px; border-radius: 32px; background: rgba(255,255,255,.64); box-shadow: 0 18px 50px rgba(23,50,87,.12); }
+    textarea { flex: 1; min-height: 44px; max-height: 140px; resize: none; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; background: rgba(255,255,255,.78); color: #173257; padding: 12px 16px; font-size: 16px; outline: none; }
+    button { border: 0; cursor: pointer; }
+    .send { width: 44px; height: 44px; border-radius: 22px; background: #173257; color: white; font-size: 22px; line-height: 1; }
+    .send:disabled { opacity: .35; cursor: default; }
+    .under { display: flex; justify-content: space-between; gap: 12px; margin-top: 12px; color: #617287; font-size: 13px; }
+    .toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,.6); padding: 4px; border-radius: 999px; }
+    .toggle button { background: transparent; color: #617287; border-radius: 999px; padding: 8px 12px; font-size: 13px; }
+    .toggle button.active { background: white; color: #173257; box-shadow: 0 8px 24px rgba(23,50,87,.09); }
+    .prompt-open { position: fixed; top: 18px; right: 20px; z-index: 4; border-radius: 999px; background: rgba(255,255,255,.72); color: #173257; padding: 9px 14px; box-shadow: 0 10px 30px rgba(23,50,87,.08); }
+    .drawer { position: fixed; inset: 0; z-index: 10; display: flex; justify-content: flex-end; background: rgba(23,50,87,.18); }
+    .panel { width: min(420px, 100%); height: 100%; background: #f7fbfd; box-shadow: -20px 0 70px rgba(23,50,87,.18); padding: 22px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .panel-head p { margin: 0 0 4px; color: #617287; font-size: 12px; }
+    .panel-head h2 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 34px; font-weight: 300; }
+    .close { background: transparent; color: #617287; font-size: 28px; line-height: 1; }
+    .prompt-mode, .prompt-actions { display: flex; gap: 8px; }
+    .prompt-mode { margin-top: 22px; }
+    .prompt-mode button, .prompt-actions button { border: 1px solid #d8e2ec; border-radius: 999px; background: white; color: #617287; padding: 9px 14px; font-size: 13px; }
+    .prompt-mode button.active, .prompt-actions button:last-child { border-color: #173257; background: #173257; color: white; }
+    .panel textarea { width: 100%; min-height: 260px; margin-top: 14px; resize: vertical; border-radius: 10px; padding: 14px; line-height: 1.45; box-shadow: none; }
+    .prompt-actions { justify-content: flex-end; margin-top: 12px; }
+    .prompt-note { margin: 14px 0 0; color: #617287; font-size: 12px; line-height: 1.4; }
+    .hidden { display: none; }
+    @media (max-width: 640px) {
+      .empty h1 { font-size: 42px; }
+      .under { align-items: flex-start; flex-direction: column; }
+      .toggle { width: 100%; }
+      .toggle button { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav"><div class="brand">Mendel</div></nav>
+  <button id="promptOpen" class="prompt-open" type="button">Prompt</button>
+  <aside id="promptDrawer" class="drawer hidden">
+    <div class="panel">
+      <div class="panel-head">
+        <div><p>Test Controls</p><h2>System Prompt</h2></div>
+        <button id="promptClose" class="close" type="button" aria-label="Close prompt editor">x</button>
+      </div>
+      <div class="prompt-mode">
+        <button id="promptAppend" class="active" type="button">Append</button>
+        <button id="promptReplace" type="button">Replace</button>
+      </div>
+      <textarea id="promptDraft" placeholder="Add session instructions for Mendel..." rows="12"></textarea>
+      <div class="prompt-actions">
+        <button id="promptClear" type="button">Clear</button>
+        <button id="promptApply" type="button">Apply</button>
+      </div>
+      <p id="promptNote" class="prompt-note">Using the default Mendel prompt.</p>
+    </div>
+  </aside>
+  <main class="app">
+    <section class="chat">
+      <div id="empty" class="empty"><div class="mem">מ</div><h1>Mendel</h1></div>
+      <div id="messages" class="messages"></div>
+      <form id="composer" class="composer">
+        <textarea id="input" placeholder="Ask Mendel" rows="1"></textarea>
+        <button id="send" class="send" type="submit" disabled>↑</button>
+      </form>
+      <div class="under">
+        <div class="toggle">
+          <button id="foundations" class="active" type="button">Tanya + Foundations</button>
+          <button id="tanya" type="button">Tanya</button>
+        </div>
+        <span id="status">Ready</span>
+      </div>
+    </section>
+  </main>
+  <script>
+    const TOKEN = ${JSON.stringify(MENDEL_TOKEN)};
+    const BACKEND_WS_URL = ${JSON.stringify(MENDEL_WS_URL)};
+    let corpus = new URLSearchParams(location.search).get("corpus") === "tanya" ? "tanya" : "foundations";
+    let promptMode = "append";
+    let promptOverride = "";
+    let socket = null;
+    let conversationId = null;
+    let streaming = "";
+    let busy = false;
+    const el = (id) => document.getElementById(id);
+    const clean = (text) => String(text || "").replace(/:::sacred-quote[\\s\\S]*?:::/g, "").replace(/:::suggested-replies[\\s\\S]*?:::/g, "").trim();
+    function sessionId() { return "mendel-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8); }
+    function setCorpus(next) {
+      corpus = next;
+      el("tanya").classList.toggle("active", corpus === "tanya");
+      el("foundations").classList.toggle("active", corpus === "foundations");
+    }
+    function setPromptMode(next) {
+      promptMode = next === "replace" ? "replace" : "append";
+      el("promptAppend").classList.toggle("active", promptMode === "append");
+      el("promptReplace").classList.toggle("active", promptMode === "replace");
+    }
+    function updatePromptNote() {
+      el("promptNote").textContent = promptOverride
+        ? (promptMode === "replace" ? "Replacing " : "Appending ") + promptOverride.length + " chars on the next answer."
+        : "Using the default Mendel prompt.";
+    }
+    setCorpus(corpus);
+    setPromptMode(promptMode);
+    function addMessage(role, content, streamingId) {
+      el("empty").classList.add("hidden");
+      let node = streamingId ? document.getElementById(streamingId) : null;
+      if (!node) {
+        node = document.createElement("article");
+        node.className = "msg " + role;
+        if (streamingId) node.id = streamingId;
+        el("messages").appendChild(node);
+      }
+      node.textContent = content;
+      el("messages").scrollTop = el("messages").scrollHeight;
+    }
+    function connect(onReady) {
+      if (socket && socket.readyState === WebSocket.OPEN) return onReady(socket);
+      el("status").textContent = "Connecting";
+      socket = new WebSocket(BACKEND_WS_URL + "/ws/yochai/" + sessionId());
+      socket.onopen = () => socket.send(JSON.stringify({ type: "auth", token: TOKEN }));
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === "auth_success") {
+          el("status").textContent = "Ready";
+          if (onReady) onReady(socket);
+        } else if (data.type === "chunk") {
+          streaming = clean(streaming + String(data.content || ""));
+          addMessage("assistant", streaming, "streaming");
+        } else if (data.type === "complete") {
+          const content = clean(data.content || streaming);
+          conversationId = typeof data.conversation_id === "string" ? data.conversation_id : conversationId;
+          addMessage("assistant", content, "streaming");
+          const node = document.getElementById("streaming");
+          if (node) node.removeAttribute("id");
+          streaming = "";
+          busy = false;
+          el("send").disabled = !el("input").value.trim();
+          el("status").textContent = "Ready";
+        } else if (data.type === "error" || data.type === "auth_failed") {
+          addMessage("assistant", clean(data.content) || "Mendel could not answer.");
+          busy = false;
+          el("status").textContent = "Error";
+        }
+      };
+      socket.onclose = () => { socket = null; if (busy) el("status").textContent = "Reconnect on send"; };
+      socket.onerror = () => { el("status").textContent = "Connection issue"; };
+    }
+    function send(text) {
+      busy = true;
+      el("status").textContent = "Thinking";
+      el("send").disabled = true;
+      addMessage("user", text);
+      streaming = "";
+      connect((ws) => ws.send(JSON.stringify({
+        type: "message",
+        mode: "general",
+        content: text,
+        conversation_id: conversationId || undefined,
+        context: {
+          app_profile: "mendel",
+          corpus_policy: corpus,
+          mendel_prompt_override: promptOverride || undefined,
+          mendel_prompt_override_mode: promptOverride ? promptMode : undefined,
+          current_route: "/mendel",
+          resume_context: { kind: "general", route: "/mendel", query: { corpus } }
+        }
+      })));
+    }
+    el("input").addEventListener("input", () => { el("send").disabled = busy || !el("input").value.trim(); });
+    el("input").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); el("composer").requestSubmit(); }
+    });
+    el("composer").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const text = el("input").value.trim();
+      if (!text || busy) return;
+      el("input").value = "";
+      send(text);
+    });
+    el("tanya").onclick = () => setCorpus("tanya");
+    el("foundations").onclick = () => setCorpus("foundations");
+    el("promptOpen").onclick = () => el("promptDrawer").classList.remove("hidden");
+    el("promptClose").onclick = () => el("promptDrawer").classList.add("hidden");
+    el("promptAppend").onclick = () => { setPromptMode("append"); updatePromptNote(); };
+    el("promptReplace").onclick = () => { setPromptMode("replace"); updatePromptNote(); };
+    el("promptClear").onclick = () => {
+      promptOverride = "";
+      el("promptDraft").value = "";
+      updatePromptNote();
+    };
+    el("promptApply").onclick = () => {
+      promptOverride = el("promptDraft").value.trim();
+      updatePromptNote();
+      el("promptDrawer").classList.add("hidden");
+    };
+  </script>
+</body>
+</html>`;
+
 function contentType(path) {
   if (path.endsWith(".css")) return TEXT_TYPES.css;
   if (path.endsWith(".webp")) return "image/webp";
@@ -36,10 +286,39 @@ function normalizePath(url) {
     "/whatiscalledthinking",
     "/etz-hasadeh",
     "/meditations-with-zohar",
-    "/contact"
+    "/contact",
+    "/mendel"
   ]);
   if (redirects.has(path)) return { redirect: path + "/" };
   return { path };
+}
+
+function hasMendelAccess(request) {
+  return (request.headers.get("Cookie") || "")
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .includes(MENDEL_COOKIE);
+}
+
+async function handleMendelAuth(request) {
+  const form = await request.formData();
+  const password = String(form.get("password") || "");
+  if (password !== MENDEL_PASSWORD) {
+    return new Response(MENDEL_LOGIN_HTML, {
+      status: 401,
+      headers: { "Content-Type": TEXT_TYPES.html, "Cache-Control": "no-store", ...SECURITY_HEADERS }
+    });
+  }
+
+  return new Response(null, {
+    status: 303,
+    headers: {
+      "Location": "/mendel/",
+      "Set-Cookie": `${MENDEL_COOKIE}; Path=/mendel; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`,
+      "Cache-Control": "no-store",
+      ...SECURITY_HEADERS
+    }
+  });
 }
 
 function decodeBase64(value) {
@@ -62,6 +341,14 @@ export default {
 
     let path = normalized.path;
     if (path !== "/" && path.endsWith("/index.html")) path = path.slice(0, -"index.html".length);
+
+    if (path === "/mendel/auth" && request.method === "POST") return handleMendelAuth(request);
+
+    if (path === "/mendel/") {
+      return new Response(hasMendelAccess(request) ? MENDEL_APP_HTML : MENDEL_LOGIN_HTML, {
+        headers: { "Content-Type": TEXT_TYPES.html, "Cache-Control": "no-store", ...SECURITY_HEADERS }
+      });
+    }
 
     if (TEXT_ASSETS[path]) {
       return new Response(TEXT_ASSETS[path], {
