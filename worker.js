@@ -25,7 +25,7 @@ const SECURITY_HEADERS = {
 
 const MENDEL_PASSWORD = "mendel";
 const MENDEL_COOKIE = "mendel_auth=ok";
-const MENDEL_WS_URL = "wss://newark-subsidiaries-teachers-titled.trycloudflare.com";
+const MENDEL_WS_URL = "wss://hygiene-generous-beam-prefers.trycloudflare.com";
 const MENDEL_TOKEN = "mendel-local-dev-token";
 
 const MENDEL_LOGIN_HTML = `<!doctype html>
