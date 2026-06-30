@@ -2,11 +2,3 @@ name = "zoharatkins-com"
 main = "worker.js"
 compatibility_date = "2026-06-16"
 workers_dev = false
-
-[[routes]]
-pattern = "zoharatkins.com/*"
-zone_name = "zoharatkins.com"
-
-[[routes]]
-pattern = "www.zoharatkins.com/*"
-zone_name = "zoharatkins.com"
